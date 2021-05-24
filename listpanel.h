@@ -13,6 +13,9 @@ private:
     QVBoxLayout dateLayout;
     QDate date;
     QString contents;
+
+public:
+    ListCard();
 };
 
 
@@ -21,7 +24,8 @@ class ListPanel  : public QWidget {
     Q_OBJECT
 
 private:
-
+    QVBoxLayout layout;
+    QVector<ListCard> cards;
 
 public:
     ListPanel();

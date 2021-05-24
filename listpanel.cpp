@@ -1,5 +1,10 @@
 #include "listpanel.h"
 
-ListPanel::ListPanel() : QWidget() {
+
+ListCard::ListCard() : QWidget(){
+
+}
+
+ListPanel::ListPanel() : QWidget(), layout(), cards()  {
 
 }
