@@ -1,11 +1,21 @@
 #include "mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), centralWidget(), mainLayout(), editPanel(), listPanel()
 {
+
+    setCentralWidget(&centralWidget);
+    centralWidget.setLayout(&mainLayout);
+
+    mainLayout.addWidget(&editPanel);
+    mainLayout.addWidget(&listPanel);
+
+    QObject::connect(editPanel.getListPanelButton(), &QPushButton::pressed,
+                     this, &MainWindow::switchToListPanel);
+
 }
 
-MainWindow::~MainWindow()
-{
-}
 
+void MainWindow::switchToListPanel(){
+    mainLayout.setCurrentWidget(&listPanel);
+}
