@@ -5,12 +5,28 @@
 #include <QFile>
 #include <QJsonDocument>
 
+#include <openssl/evp.h>
+
+class Encryption{
+
+public:
+    Encryption();
+
+    void encrypt();
+    void generateKey();
+
+};
+
 class Database
 {
 
 private:
-    QFile* file;
+    QFile* dataFile;
+    QFile* keyFile;
     QJsonDocument* dbData;
+
+    void loadData();
+    void saveData();
 
 public:
     Database();

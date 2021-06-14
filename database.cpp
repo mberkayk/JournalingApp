@@ -16,31 +16,44 @@ Database::Database() {
         qDebug() << "data directory alredy exists" << dirStr;
     }
 
-    file = new QFile(dirStr + "/db.json");
+    keyFile = new QFile(dirStr + "/key");
+    dataFile = new QFile(dirStr + "/db.json");
 
     dbData = new QJsonDocument();
 
-    //load the data from file to dbData object
+}
+
+void Database::loadData(){
+
+
+    //decrpyt the data first
     bool b;
-    if(file->exists()){
-        b = file->open(QIODevice::ExistingOnly |
+    if(dataFile->exists()){
+        b = dataFile->open(QIODevice::ExistingOnly |
                      QIODevice::ReadOnly);
     }else{
-        b = file->open(QIODevice::NewOnly |
+        b = dataFile->open(QIODevice::NewOnly |
                      QIODevice::ReadOnly);
     }
     Q_ASSERT(b);
 
-    QByteArray arr = file->readAll();
+    QByteArray arr = dataFile->readAll();
     *dbData = QJsonDocument(QJsonDocument::fromJson(arr));
     if(arr.isEmpty() || dbData->isObject() == false) {
         dbData->setObject(QJsonObject());
     }
 
-    file->close();
+    dataFile->close();
 
 }
 
+void Database::saveData(){
+    //encrypt the data
+    //save the data
+}
+
+
 Database::~Database(){
-    delete file;
+    delete dataFile;
+    delete keyFile;
 }
