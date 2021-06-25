@@ -24,8 +24,6 @@ Database::Database() {
 }
 
 void Database::loadData(){
-
-
     //decrpyt the data first
     bool b;
     if(dataFile->exists()){

@@ -6,6 +6,7 @@
 
 #include "listpanel.h"
 #include "editpanel.h"
+#include "passwordpanel.h"
 
 class MainWindow : public QMainWindow
 {
@@ -17,6 +18,7 @@ private:
 
     EditPanel editPanel;
     ListPanel listPanel;
+    PasswordPanel passPanel;
 
     void switchToListPanel();
 

@@ -13,13 +13,15 @@ SOURCES += \
     editpanel.cpp \
     listpanel.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    passwordpanel.cpp
 
 HEADERS += \
     database.h \
     editpanel.h \
     listpanel.h \
-    mainwindow.h
+    mainwindow.h \
+    passwordpanel.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
