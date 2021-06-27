@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), centralWidget(), mainLayout(), editPanel(), listPanel(), passPanel(true)
+    : QMainWindow(parent), centralWidget(), mainLayout(), editPanel(), listPanel(), passPanel(false)
 {
 
     setCentralWidget(&centralWidget);
