@@ -22,6 +22,8 @@ private:
 public:
 	InitPassword();
 
+    void enterButtonPressed();
+
 };
 
 class EnterPassword : public QWidget {

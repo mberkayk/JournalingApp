@@ -1,4 +1,6 @@
 #include "passwordpanel.h"
+#include <QErrorMessage>
+#include <QDebug>
 
 InitPassword::InitPassword() : layout(), firstLabel("Enter a password:"),
 	 firstLine(), secondLabel("Enter your password again:"), secondLine(),
@@ -18,6 +20,25 @@ InitPassword::InitPassword() : layout(), firstLabel("Enter a password:"),
 
     enterButton.setText("Enter");
     layout.addWidget(&enterButton);
+
+    QObject::connect(&enterButton, &QPushButton::pressed,
+                     this, &InitPassword::enterButtonPressed);
+
+}
+
+void InitPassword::enterButtonPressed(){
+    if(firstLine.text().compare(secondLine.text() != 0)){
+        QErrorMessage *em = new QErrorMessage(this);
+        em->testAttribute(Qt::WA_DeleteOnClose);
+        em->showMessage("Passwords aren't matching!");
+    }else{
+
+        //generate salt
+        //store the salt in the database
+        //use PBKDF2 to create a hash from the password
+        //store the hash in the database
+
+    }
 
 }
 

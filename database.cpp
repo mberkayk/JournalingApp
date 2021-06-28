@@ -2,7 +2,8 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QDebug>
-#include <QJsonObject>
+#include <QSqlDatabase>
+#include <QSqlError>
 
 Database::Database() {
 
@@ -16,39 +17,16 @@ Database::Database() {
         qDebug() << "data directory alredy exists" << dirStr;
     }
 
+
     keyFile = new QFile(dirStr + "/key");
-    dataFile = new QFile(dirStr + "/db.json");
-
-    dbData = new QJsonDocument();
-
-}
-
-void Database::loadData(){
-    //decrpyt the data first
-    bool b;
-    if(dataFile->exists()){
-        b = dataFile->open(QIODevice::ExistingOnly |
-                     QIODevice::ReadOnly);
-    }else{
-        b = dataFile->open(QIODevice::NewOnly |
-                     QIODevice::ReadOnly);
-    }
-    Q_ASSERT(b);
-
-    QByteArray arr = dataFile->readAll();
-    *dbData = QJsonDocument(QJsonDocument::fromJson(arr));
-    if(arr.isEmpty() || dbData->isObject() == false) {
-        dbData->setObject(QJsonObject());
-    }
-
-    dataFile->close();
+    QString dbPath = dirStr + "/database.db";
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");//not dbConnection
+    db.setDatabaseName(dbPath);
+    if(!db.open()) qDebug() << db.lastError();
 
 }
 
-void Database::saveData(){
-    //encrypt the data
-    //save the data
-}
+
 
 
 Database::~Database(){
