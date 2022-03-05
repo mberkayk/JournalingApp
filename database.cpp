@@ -119,11 +119,6 @@ void Database::newPasswordEntered(QByteArray a){
 	QByteArray tmparr = QByteArray::fromRawData((char*)key, 32);
 	qDebug() << "this is the second key:" << tmparr;
 
-
-	EVP_CIPHER_CTX *ctx;
-	if(!(ctx = EVP_CIPHER_CTX_new()))
-        handleErrors();
-
 	//the key which is generated from the password
 	unsigned char *passKey = new unsigned char[32];
 	for(int i=0; i < 32; i++){
@@ -135,36 +130,22 @@ void Database::newPasswordEntered(QByteArray a){
 	tmparr = QByteArray::fromRawData((char*)iv, 16);
 	qDebug() << "iv: " << tmparr;
 
-	if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
-		handleErrors();
 	unsigned char *out = new unsigned char[32];
-	int *outlen = new int(0);
-	if(1 != EVP_EncryptUpdate(ctx, out, outlen, key, 32))
-		handleErrors();
+	int outlen = encrypt(key, 32, passKey, iv, out);
 
-	int len = 0;
-	if(1 != EVP_EncryptFinal_ex(ctx, out + *outlen, &len))
-		handleErrors();
-	*outlen += len;
+	qDebug() << "out length is:" << outlen;
 
-	qDebug() << "out length is:" << *outlen;
-
-	EVP_CIPHER_CTX_free(ctx);
-	delete[] key;
 
 	keyFile->open(QIODevice::WriteOnly);
 	keyFile->write((char*)iv, 16);
-	keyFile->write((char*)out, *outlen);
+	keyFile->write((char*)out, outlen);
 
 	QByteArray arr;
-	for(int i = 0; i < *outlen; i++){
+	for(int i = 0; i < outlen; i++){
 		arr.append(out[i]);
 	}
 	qDebug() << "digest:" << arr;
 
-	delete[] iv;
-	delete[] out;
-	delete outlen;
 	keyFile->close();
 
 	emit passInitComplete();
