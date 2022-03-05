@@ -9,6 +9,8 @@
 
 class InitPassword : public QWidget {
 
+	Q_OBJECT
+
 private:
 	QVBoxLayout layout;
 
@@ -24,24 +26,33 @@ public:
 
     void enterButtonPressed();
 
+signals:
+	void newPasswordSignal(QByteArray);
+
 };
 
 class EnterPassword : public QWidget {
 
+	Q_OBJECT
+
 private:
-	QVBoxLayout layout;
+	QVBoxLayout *layout;
 
-	QLabel label;
-	QLineEdit passLineEdit;
+	QLineEdit *passLineEdit;
 
-	QPushButton enterButton;
+	QPushButton *enterButton;
 
 public:
 	EnterPassword();
 
+signals:
+	void passEnteredSignal(QByteArray);
+
 };
 
 class PasswordPanel : public QWidget {
+
+	Q_OBJECT
 
 private:
 	QVBoxLayout layout;
@@ -51,6 +62,10 @@ private:
 
 public:
     PasswordPanel(bool b);
+
+signals:
+	void newPasswordSignal(QByteArray);
+	void passEnteredSignal(QByteArray);
 
 };
 

@@ -13,16 +13,24 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 private:
-    QWidget centralWidget;
-    QStackedLayout mainLayout;
+    QWidget *centralWidget;
+    QStackedLayout *mainLayout;
 
-    EditPanel editPanel;
-    ListPanel listPanel;
-    PasswordPanel passPanel;
+    EditPanel *editPanel;
+    ListPanel *listPanel;
+    PasswordPanel *passPanel;
 
     void switchToListPanel();
 
 public:
     MainWindow(QWidget *parent = nullptr);
+
+public slots:
+	void switchToEditPanel();
+
+signals:
+	void newPasswordSignal(QByteArray);
+	void passEnteredSignal(QByteArray);
+
 };
 #endif // MAINWINDOW_H

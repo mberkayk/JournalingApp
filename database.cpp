@@ -4,6 +4,9 @@
 #include <QDebug>
 #include <QSqlDatabase>
 #include <QSqlError>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
 
 Database::Database() {
 
@@ -26,10 +29,200 @@ Database::Database() {
 
 }
 
-
-
-
 Database::~Database(){
-    delete dataFile;
     delete keyFile;
 }
+
+void Database::handleErrors() {
+    ERR_print_errors_fp(stderr);
+    abort();
+}
+
+
+int Database::encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *iv, unsigned char *ciphertext) {
+    EVP_CIPHER_CTX *ctx;
+
+    int len;
+
+    int ciphertext_len;
+
+    /* Create and initialise the context */
+    if(!(ctx = EVP_CIPHER_CTX_new()))
+        handleErrors();
+
+    /*
+     * Initialise the encryption operation. IMPORTANT - ensure you use a key
+     * and IV size appropriate for your cipher
+     * In this example we are using 256 bit AES (i.e. a 256 bit key). The
+     * IV size for *most* modes is the same as the block size. For AES this
+     * is 128 bits
+     */
+    if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
+        handleErrors();
+
+    /*
+     * Provide the message to be encrypted, and obtain the encrypted output.
+     * EVP_EncryptUpdate can be called multiple times if necessary
+     */
+    if(1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
+        handleErrors();
+    ciphertext_len = len;
+
+    /*
+     * Finalise the encryption. Further ciphertext bytes may be written at
+     * this stage.
+     */
+    if(1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
+        handleErrors();
+    ciphertext_len += len;
+
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
+
+    return ciphertext_len;
+}
+
+int Database::decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key, unsigned char *iv, unsigned char *plaintext) {
+    EVP_CIPHER_CTX *ctx;
+
+    int len;
+
+    int plaintext_len;
+
+    if(!(ctx = EVP_CIPHER_CTX_new()))
+        handleErrors();
+
+    if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
+        handleErrors();
+
+    if(1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
+        handleErrors();
+    plaintext_len = len;
+
+    if(1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
+        handleErrors();
+    plaintext_len += len;
+
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
+
+    return plaintext_len;
+}
+
+void Database::newPasswordEntered(QByteArray a){
+
+	//generate a random encryption key to be encryted
+	//this key will be encryted with the password generated key
+	//and stored in the keyFile
+	unsigned char *key = new unsigned char[32];
+	RAND_bytes(key, 32);
+	QByteArray tmparr = QByteArray::fromRawData((char*)key, 32);
+	qDebug() << "this is the second key:" << tmparr;
+
+
+	EVP_CIPHER_CTX *ctx;
+	if(!(ctx = EVP_CIPHER_CTX_new()))
+        handleErrors();
+
+	//the key which is generated from the password
+	unsigned char *passKey = new unsigned char[32];
+	for(int i=0; i < 32; i++){
+		passKey[i] = a.at(i);
+	}
+
+	unsigned char *iv = new unsigned char[16];
+	RAND_bytes(iv, 16);
+	tmparr = QByteArray::fromRawData((char*)iv, 16);
+	qDebug() << "iv: " << tmparr;
+
+	if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
+		handleErrors();
+	unsigned char *out = new unsigned char[32];
+	int *outlen = new int(0);
+	if(1 != EVP_EncryptUpdate(ctx, out, outlen, key, 32))
+		handleErrors();
+
+	int len = 0;
+	if(1 != EVP_EncryptFinal_ex(ctx, out + *outlen, &len))
+		handleErrors();
+	*outlen += len;
+
+	qDebug() << "out length is:" << *outlen;
+
+	EVP_CIPHER_CTX_free(ctx);
+	delete[] key;
+
+	keyFile->open(QIODevice::WriteOnly);
+	keyFile->write((char*)iv, 16);
+	keyFile->write((char*)out, *outlen);
+
+	QByteArray arr;
+	for(int i = 0; i < *outlen; i++){
+		arr.append(out[i]);
+	}
+	qDebug() << "digest:" << arr;
+
+	delete[] iv;
+	delete[] out;
+	delete outlen;
+	keyFile->close();
+
+	emit passInitComplete();
+
+}
+
+void Database::oldPassEntered(QByteArray arr) {
+
+	qDebug() << "passKey:" << arr.size() << arr;
+
+	EVP_CIPHER_CTX *ctx;
+	if(!(ctx = EVP_CIPHER_CTX_new()))
+        handleErrors();
+
+	unsigned char passKey[32];
+	for(int i=0; i < 32; i++){
+		passKey[i] = arr.at(i);
+	}
+
+	keyFile->open(QIODevice::ReadOnly);
+
+	unsigned char iv[16];
+	keyFile->read((char*)iv, 16);
+	QByteArray tmparr = QByteArray::fromRawData((char*)iv, 16);
+	qDebug() << "iv: " << tmparr;
+
+
+	QByteArray cipherArr = keyFile->read(100);
+	unsigned char ciphertext[48];
+	qDebug() << "cipher: " << cipherArr.size() << cipherArr;
+	for(int i = 0; i < 48; i++){
+		ciphertext[i] = cipherArr.at(i);
+	}
+
+	keyFile->close();
+
+    if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, passKey, iv))
+		handleErrors();
+
+	unsigned char plaintext[128];
+	int outputlen = 0;
+	int len = 0;
+    if(1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, 48))
+		handleErrors();
+	outputlen = len;
+
+	if(1 != EVP_DecryptFinal_ex(ctx, plaintext + outputlen, &len))
+		handleErrors();
+
+	outputlen += len;
+
+	QByteArray tmp;
+	for(int i = 0; i < outputlen; i++){
+		tmp.append(plaintext[i]);
+	}
+	qDebug() << "key: " << tmp;
+
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
+}
+
