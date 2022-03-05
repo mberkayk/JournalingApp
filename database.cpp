@@ -175,10 +175,6 @@ void Database::oldPassEntered(QByteArray arr) {
 
 	qDebug() << "passKey:" << arr.size() << arr;
 
-	EVP_CIPHER_CTX *ctx;
-	if(!(ctx = EVP_CIPHER_CTX_new()))
-        handleErrors();
-
 	unsigned char passKey[32];
 	for(int i=0; i < 32; i++){
 		passKey[i] = arr.at(i);
@@ -201,20 +197,10 @@ void Database::oldPassEntered(QByteArray arr) {
 
 	keyFile->close();
 
-    if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, passKey, iv))
-		handleErrors();
-
 	unsigned char plaintext[128];
-	int outputlen = 0;
-	int len = 0;
-    if(1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, 48))
-		handleErrors();
-	outputlen = len;
 
-	if(1 != EVP_DecryptFinal_ex(ctx, plaintext + outputlen, &len))
-		handleErrors();
 
-	outputlen += len;
+	int outputlen = decrypt(ciphertext, 48, passKey, iv, plaintext);
 
 	QByteArray tmp;
 	for(int i = 0; i < outputlen; i++){
@@ -222,7 +208,5 @@ void Database::oldPassEntered(QByteArray arr) {
 	}
 	qDebug() << "key: " << tmp;
 
-    /* Clean up */
-    EVP_CIPHER_CTX_free(ctx);
 }
 
